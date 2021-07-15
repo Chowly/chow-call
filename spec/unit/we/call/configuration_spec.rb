@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe We::Call::Configuration do
+RSpec.describe Chow::Call::Configuration do
 
   describe "#app_env_header" do
     it "default value is X-App-Env" do

@@ -1,4 +1,4 @@
-module We
+module Chow
   module Call
     module Middleware
       module Server
@@ -22,7 +22,7 @@ module We
           end
 
           def config
-            We::Call.configuration
+            Chow::Call.configuration
           end
 
           def incoming_app_env_header

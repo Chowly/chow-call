@@ -1,7 +1,7 @@
 require 'faraday'
 require 'faraday_middleware'
 
-module We
+module Chow
   module Call
     class Configuration
       attr_accessor :app_env, :app_env_header, :app_name, :app_name_header, :detect_deprecations,

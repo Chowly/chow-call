@@ -19,4 +19,4 @@ VCR.configure do |config|
 end
 
 require 'rails'
-require 'we/call'
+require 'chow/call'

@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe We::Call::Middleware::Server::LogUserAgent do
+RSpec.describe Chow::Call::Middleware::Server::LogUserAgent do
   describe '#call' do
     let(:app_double) { double }
     let(:env) { { 'HTTP_USER_AGENT' => 'pokedex' } }

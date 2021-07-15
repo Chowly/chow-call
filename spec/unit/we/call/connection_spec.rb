@@ -1,7 +1,7 @@
 require "spec_helper"
 
-RSpec.describe We::Call::Connection do
-  DEFAULT_MIDDLEWARES = [FaradayMiddleware::Gzip, Faraday::Sunset, Faraday::Request::Retry]
+RSpec.describe Chow::Call::Connection do
+  DEFAULT_MIDDLEWARES = [FaradayMiddleware::Gzip, Faraday::Request::Retry]
 
   describe '#initialize' do
     context 'when host is missing' do
@@ -13,24 +13,24 @@ RSpec.describe We::Call::Connection do
     context 'when app is missing' do
       subject { described_class.new(host: 'http://foo.com') }
 
-      it 'raises We::Call::Connection::MissingApp' do
-        expect { subject }.to raise_error(We::Call::Connection::MissingApp)
+      it 'raises Chow::Call::Connection::MissingApp' do
+        expect { subject }.to raise_error(Chow::Call::Connection::MissingApp)
       end
     end
 
     context 'when timeout is missing' do
       subject { described_class.new(host: 'http://foo.com', app: 'foo', env: 'test') }
 
-      it 'raises We::Call::Connection::MissingTimeout' do
-        expect { subject }.to raise_error(We::Call::Connection::MissingTimeout)
+      it 'raises Chow::Call::Connection::MissingTimeout' do
+        expect { subject }.to raise_error(Chow::Call::Connection::MissingTimeout)
       end
     end
 
     context 'when open_timeout is nilled somehow' do
       subject { described_class.new(host: 'http://foo.com', app: 'foo', env: 'test', timeout: 5, open_timeout: nil) }
 
-      it 'raises We::Call::Connection::MissingOpenTimeout' do
-        expect { subject }.to raise_error(We::Call::Connection::MissingOpenTimeout)
+      it 'raises Chow::Call::Connection::MissingOpenTimeout' do
+        expect { subject }.to raise_error(Chow::Call::Connection::MissingOpenTimeout)
       end
     end
 
@@ -46,8 +46,8 @@ RSpec.describe We::Call::Connection do
       context 'and it is NOT guessable' do
         before { allow_any_instance_of(described_class).to receive(:guess_env) { nil } }
 
-        it 'raises We::Call::Connection::MissingEnv' do
-          expect { subject }.to raise_error(We::Call::Connection::MissingEnv)
+        it 'raises Chow::Call::Connection::MissingEnv' do
+          expect { subject }.to raise_error(Chow::Call::Connection::MissingEnv)
         end
       end
     end
@@ -122,204 +122,6 @@ RSpec.describe We::Call::Connection do
 
       it 'sets custom headers' do
         expect(subject.headers).to include('Foo' => 'bar')
-      end
-    end
-
-    context 'adapter configuration' do
-      let(:handlers) { subject.builder.handlers.map(&:klass) }
-
-      context 'when no adapter is specified' do
-
-        before do
-          We::Call::configuration.detect_deprecations = true
-        end
-
-        subject do
-          described_class.new(host: 'http://pokeapi.co/api/v2/', app: 'pokedex', env: 'test', timeout: 5)
-        end
-
-        it 'should have the default adapter' do
-          expect(handlers).to match_array(
-            [described_class::DEFAULT_ADAPTER_CLASS].concat(DEFAULT_MIDDLEWARES)
-          )
-        end
-      end
-
-      context 'when default adapter is specified' do
-        subject do
-          described_class.new(host: 'http://pokeapi.co/api/v2/', app: 'pokedex', env: 'test', timeout: 5) do |conn|
-            conn.adapter described_class::DEFAULT_ADAPTER
-          end
-        end
-
-        it 'is not repeated adapter handler' do
-          expect(handlers).to match_array(
-            [described_class::DEFAULT_ADAPTER_CLASS].concat(DEFAULT_MIDDLEWARES)
-          )
-        end
-      end
-
-      context 'when :net_http adapter is specified' do
-        subject do
-          described_class.new(host: 'http://pokeapi.co/api/v2/', app: 'pokedex', env: 'test', timeout: 5) do |conn|
-            conn.adapter :net_http
-          end
-        end
-
-        it 'specifies NetHttp adapter handler' do
-          expect(handlers).to include(Faraday::Adapter::NetHttp)
-        end
-
-        it 'skips FaradayMiddleware::Gzip' do
-          expect(handlers).to_not include(FaradayMiddleware::Gzip)
-        end
-      end
-
-      context 'when :net_http_persistent adapter is specified' do
-        subject do
-          described_class.new(host: 'http://pokeapi.co/api/v2/', app: 'pokedex', env: 'test', timeout: 5) do |conn|
-            conn.adapter :net_http_persistent
-          end
-        end
-
-        it 'specifies NetHttpPersistent adapter handler' do
-          expect(handlers).to include(Faraday::Adapter::NetHttpPersistent)
-        end
-
-        it 'skips FaradayMiddleware::Gzip' do
-          expect(handlers).to_not include(FaradayMiddleware::Gzip)
-        end
-      end
-
-      context 'when detect deprecations is truthy' do
-        let(:builder_spy) { spy('QueryableBuilder') }
-
-        before do
-          We::Call::configuration.detect_deprecations = true
-          allow(We::Call::Connection::QueryableBuilder).to receive(:new) { builder_spy }
-          allow(builder_spy).to receive(:use)
-          allow(builder_spy).to receive(:response)
-        end
-
-        context 'and config.detect_deprecations is left to default' do
-          it 'register middleware with { active_support: :auto }' do
-            subject
-            expect(builder_spy).to have_received(:response).with(
-              :sunset,
-              active_support: :auto,
-              rollbar: :auto
-            )
-          end
-        end
-
-        context 'and config.detect_deprecations is set to :logger' do
-          let(:logger) { spy('Logger') }
-
-          before do
-            @orig_detect_deprecations = We::Call::configuration.detect_deprecations
-            We::Call::configuration.detect_deprecations = logger
-          end
-
-          after do
-            We::Call::configuration.detect_deprecations = @orig_detect_deprecations
-          end
-
-          it 'register middleware with { logger: logger }' do
-            subject
-            expect(builder_spy).to have_received(:response).with(
-              :sunset,
-              logger: logger,
-              rollbar: :auto,
-              active_support: :auto
-            )
-          end
-        end
-      end
-
-      context 'when retry is disabled' do
-        before do
-          We::Call::configuration.retry = false
-        end
-
-        after do
-          We::Call::configuration.retry = true
-        end
-
-        it 'does not register retry middleware' do
-          expect(handlers).not_to include(Faraday::Request::Retry)
-        end
-      end
-
-      context 'when retry is enabled' do
-        let(:builder_spy) { spy('QueryableBuilder') }
-
-        before do
-          allow(We::Call::Connection::QueryableBuilder).to receive(:new) { builder_spy }
-          allow(builder_spy).to receive(:use)
-          allow(builder_spy).to receive(:response)
-        end
-
-        context 'when retry is used with default options' do
-          it 'registers the middleware with the correct options' do
-            subject
-            expect(builder_spy).to have_received(:request).with(
-              :retry,
-              We::Call::Connection::DEFAULT_RETRY_OPTIONS
-            )
-          end
-
-          context 'when options are overriden' do
-            let(:options) { { max: 5, backoff_factor: 2 } }
-
-            around do |example|
-              We::Call::configuration.retry_options = options
-              example.run
-              We::Call::configuration.retry_options = {}
-            end
-
-            it 'registers the middleware with the correct options' do
-              subject
-              expect(builder_spy).to have_received(:request).with(
-                :retry,
-                We::Call::Connection::DEFAULT_RETRY_OPTIONS.merge(options)
-              )
-            end
-
-            context 'when retry options are set on a connection' do
-              let(:options) { { max: 3, backoff_factor: 2 } }
-              let(:valid_arguments) { super().merge(retry_options: options) }
-
-              it 'registers the middleware with the correct options' do
-                subject
-                expect(builder_spy).to have_received(:request).with(
-                  :retry,
-                  We::Call::Connection::DEFAULT_RETRY_OPTIONS.merge(options)
-                )
-              end
-            end
-          end
-
-          context 'when exceptions are overriden' do
-            let(:options) { { exceptions: [Faraday::ResourceNotFound] } }
-
-            around do |example|
-              We::Call::configuration.retry_options = options
-              example.run
-              We::Call::configuration.retry_options = {}
-            end
-
-            it 'registers the middleware with the correct options' do
-              expected_options = We::Call::Connection::DEFAULT_RETRY_OPTIONS.dup
-              expected_options[:exceptions] += options[:exceptions]
-
-              subject
-              expect(builder_spy).to have_received(:request).with(
-                :retry,
-                expected_options
-              )
-            end
-          end
-        end
       end
     end
   end

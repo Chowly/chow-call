@@ -52,13 +52,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v0.7.0] - 2017-10-07
 ### Breaking Changes
-- Removed `We::Call::Deprecated` and `We::Call::Annotations`. Deprecation logic is now handled by [rails-sunset] instead. I fully understand the irony of removing deprecation logic without deprecation
+- Removed `Chow::Call::Deprecated` and `Chow::Call::Annotations`. Deprecation logic is now handled by [rails-sunset] instead. I fully understand the irony of removing deprecation logic without deprecation
 
 [rails-sunset]: https://github.com/wework/rails-sunset
 
 ## [v0.6.1] - 2017-10-03
 ### Fixed
-- Required typhoeus in We::Call instead of connection, which loads it early enough for NewRelic tracing to kick in if you use that
+- Required typhoeus in Chow::Call instead of connection, which loads it early enough for NewRelic tracing to kick in if you use that
 
 ### Changed
 - Reduced open timeout default to 1 second
@@ -88,18 +88,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Switched `config.detect_deprecations` from bool to expect `:active_support` or logger instance
-- Moved `We::Call::Middleware::Client::DetectDeprecations` into its own [faraday-sunset] gem (no BC breaks)
+- Moved `Chow::Call::Middleware::Client::DetectDeprecations` into its own [faraday-sunset] gem (no BC breaks)
 
 [faraday-sunset]: https://github.com/wework/faraday-sunset
 
 ## [v0.5.0]
 
 ### Added
-- Configurable `We::Call.configure` which accepts a config block
+- Configurable `Chow::Call.configure` which accepts a config block
 - Config option `config.app_name` to avoid providing `app:` in every connection initializer
-- Added the concept of Annotations. Simply `extend We::Call::Annotations` in a base controller to get cool stuff
-- First annotation: `We::Call::Deprecated` added to mark controller methods as deprecated
-- Added `We::Call::Middleware::Client::DetectDeprecations` that automatically registers as a faraday response middleware to report deprecated endpoints
+- Added the concept of Annotations. Simply `extend Chow::Call::Annotations` in a base controller to get cool stuff
+- First annotation: `Chow::Call::Deprecated` added to mark controller methods as deprecated
+- Added `Chow::Call::Middleware::Client::DetectDeprecations` that automatically registers as a faraday response middleware to report deprecated endpoints
 
 ### Changed
 - Defaults to setting `X-App-Name` instead of `X-WeWork-App` (override with config.app_name_header)
@@ -121,5 +121,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v0.4.0]
 
 ### Added
-- `We::Call::Connection.new` requires `timeout: 1` where 1 is seconds.
-- `We::Call::Connection.new` accepts `open_timeout: 1` where 1 is seconds.
+- `Chow::Call::Connection.new` requires `timeout: 1` where 1 is seconds.
+- `Chow::Call::Connection.new` accepts `open_timeout: 1` where 1 is seconds.

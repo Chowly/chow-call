@@ -1,1 +1,0 @@
-require 'we/call'

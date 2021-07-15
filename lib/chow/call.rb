@@ -1,14 +1,13 @@
 require 'faraday'
 require 'faraday_middleware'
-require 'faraday-sunset'
 require 'typhoeus'
 
-module We
+module Chow
   module Call
-    autoload :Connection,    "we/call/connection"
-    autoload :Configuration, "we/call/configuration"
-    autoload :Middleware,    "we/call/middleware"
-    autoload :VERSION,       "we/call/version"
+    autoload :Connection,    "chow/call/connection"
+    autoload :Configuration, "chow/call/configuration"
+    autoload :Middleware,    "chow/call/middleware"
+    autoload :VERSION,       "chow/call/version"
 
     class << self
       attr_accessor :configuration

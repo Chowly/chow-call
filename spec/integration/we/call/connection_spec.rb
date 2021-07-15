@@ -1,6 +1,6 @@
 require "spec_helper"
 
-RSpec.describe We::Call::Connection do
+RSpec.describe Chow::Call::Connection do
 
   describe '#initialize', vcr: { cassette_name: 'vileplume' } do
     context 'without middlewares registered' do

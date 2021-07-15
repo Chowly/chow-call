@@ -1,4 +1,4 @@
-# We::Call
+# Chow::Call
 
 [![Build Status][ci-image]][ci-url]
 [![Coverage Status][coveralls-image]][coveralls-url]
@@ -27,7 +27,7 @@ gem 'we-call'
 ```ruby
 # config/initializers/we-call.rb
 
-We::Call.configure do |config|
+Chow::Call.configure do |config|
   config.app_name = 'service-a'       # default nil (Connection class falls back to APP_NAME or Rails name)
   config.app_env = 'staging'          # default nil (Connection class back to RACK_ENV || RAILS_ENV)
   config.detect_deprecations = false  # default true
@@ -37,10 +37,10 @@ end
 As this is a Faraday wrapper, the only thing that will change from normal Faraday usage is initialization.
 
 ```ruby
-connection = We::Call::Connection.new(host: 'https://some-service.example.com/', timeout: 2)
+connection = Chow::Call::Connection.new(host: 'https://some-service.example.com/', timeout: 2)
 
 # or with a Faraday connection block
-connection = We::Call::Connection.new(host: 'https://some-service.example.com/', timeout: 2) do |conn|
+connection = Chow::Call::Connection.new(host: 'https://some-service.example.com/', timeout: 2) do |conn|
   conn.token_auth('abc123token')
   conn.headers['Foo'] = 'bar'
 end
@@ -52,16 +52,16 @@ See more connection block options in the [Faraday documentation](https://github.
 
 An application should provide its own name in the user agent when calling other services. This is important in case this app busts a local cache, causing it to stampeding herd other service(s).
 
-Other services need to know which server is causing the problem, so no connections are allowed through `We::Call` without an app being set.
+Other services need to know which server is causing the problem, so no connections are allowed through `Chow::Call` without an app being set.
 
 ```ruby
 # Provided at config
-connection = We::Call.configure do |config|
+connection = Chow::Call.configure do |config|
   config.app_name = 'Service A'
 end
 
 # Provided at initialization
-connection = We::Call::Connection.new(host: 'https://service-b.example.com/', app: 'Service A', timeout: 2)
+connection = Chow::Call::Connection.new(host: 'https://service-b.example.com/', app: 'Service A', timeout: 2)
 ```
 
 _Ofc services could lie about this, so do not use App Name for any sort of security. For that you need to use tokens assigned to applications. This is essentially just forcing a user agent._
@@ -70,12 +70,12 @@ _Ofc services could lie about this, so do not use App Name for any sort of secur
 
 ```ruby
 # Provided at config
-connection = We::Call.configure do |config|
+connection = Chow::Call.configure do |config|
   config.app_env = 'staging'
 end
 
 # Provided at initialization
-connection = We::Call::Connection.new(host: 'https://service-b.example.com/', env: 'staging', timeout: 2)
+connection = Chow::Call::Connection.new(host: 'https://service-b.example.com/', env: 'staging', timeout: 2)
 ```
 
 Not only is knowing the app name important, but knowing the env is necessary too. Sometimes people configure stuff wrong, and Service A (staging) will hit Service B (production) 😨.
@@ -90,12 +90,12 @@ The lower this number can be the better, as it reduces time web threads spend wa
 
 ```ruby
 # Provided at initialization
-connection = We::Call::Connection.new(host: 'https://service-b.example.com/', timeout: 2)
+connection = Chow::Call::Connection.new(host: 'https://service-b.example.com/', timeout: 2)
 ```
 
 Timeouts can only be provided at initialization of a connection, as they should be different for each service. This is down to the sad reality that some internal services are more performant than others, and various third-parties will have different SLAs.
 
-As well as `timeout: num_seconds` which can set the entire open/read (essentially the total response time of the server), another optional argument exists for `open_timeout: numseconds`. This is how long We::Call should spend waiting for a vague sign of life from the server, which by default is 1.
+As well as `timeout: num_seconds` which can set the entire open/read (essentially the total response time of the server), another optional argument exists for `open_timeout: numseconds`. This is how long Chow::Call should spend waiting for a vague sign of life from the server, which by default is 1.
 
 
 ## Middleware
@@ -109,29 +109,29 @@ Automatically enabled, the retry middleware will retry the request in case of ne
 Disable the middleware:
 
 ```ruby
-We::Call.configure do |config|
+Chow::Call.configure do |config|
   config.retry = false
 end
 
 # Provided at initialization
-connection = We::Call::Connection.new(retry_options: false)
+connection = Chow::Call::Connection.new(retry_options: false)
 ```
 
 Adjust the middleware:
 
 ```ruby
-We::Call.configure do |config|
+Chow::Call.configure do |config|
   config.retry_options = { interval: 0.5 }
 end
 
 # Provided at initialization
-connection = We::Call::Connection.new(retry_options: { interval: 0.5 })
+connection = Chow::Call::Connection.new(retry_options: { interval: 0.5 })
 ```
 
 The gem smartly merges the options passed, so you can specify your own list of exceptions without being afraid to override the default ones:
 
 ```ruby
-We::Call.configure do |config|
+Chow::Call.configure do |config|
   config.retry_options = { exceptions: [Faraday::ResourceNotFound] }
 end
 ```
@@ -148,13 +148,13 @@ Automatically enabled, the faraday-sunset middleware will watch for the [Sunset 
 
 **LogUserAgent**
 
-_(Optional)_ Log the User Agent, which might just be browser information (merely kinda handy), or could be an app name, like the one `We::Call::Connection` asks you for.
+_(Optional)_ Log the User Agent, which might just be browser information (merely kinda handy), or could be an app name, like the one `Chow::Call::Connection` asks you for.
 
 ```ruby
-config.middleware.insert_after Rails::Rack::Logger, We::Call::Middleware::Server::LogUserAgent
+config.middleware.insert_after Rails::Rack::Logger, Chow::Call::Middleware::Server::LogUserAgent
 ```
 
-Easy! Check your logs for `user_agent=service-name; app_name=service-name;` The `app_name` will only show up if this was called by `We::Call::Connection` (as this is the only thing setting the `X-App-Name` header.)
+Easy! Check your logs for `user_agent=service-name; app_name=service-name;` The `app_name` will only show up if this was called by `Chow::Call::Connection` (as this is the only thing setting the `X-App-Name` header.)
 
 ## Requirements
 

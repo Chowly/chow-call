@@ -1,6 +1,6 @@
 require 'typhoeus/adapters/faraday'
 
-module We
+module Chow
   module Call
     module Connection
       extend self
@@ -25,20 +25,6 @@ module We
       class MissingTimeout < ArgumentError; end
       class MissingOpenTimeout < ArgumentError; end
 
-      QueryableBuilder = Class.new(Faraday::RackBuilder) do
-        def adapter?
-          @adapter || false
-        end
-
-        def adapter(key, *args, &block)
-          super
-          @adapter = key
-        end
-
-        def get_adapter
-          @adapter || DEFAULT_ADAPTER
-        end
-      end
 
       # @param [Object] host
       # @param [Integer] timeout
@@ -62,7 +48,7 @@ module We
 
       # @return [Faraday::Connection] Preconfigured Faraday Connection object, for hitting get, post, etc.
       def create
-        builder = QueryableBuilder.new(&Proc.new { |_| })
+        builder = Faraday::RackBuilder.new(&Proc.new { |_| })
 
         headers = {
           'User-Agent'            => app,
@@ -76,25 +62,22 @@ module We
         }
 
         Faraday.new(host, builder: builder, headers: headers, request: request) do |faraday|
-          if config.detect_deprecations
-            faraday.response :sunset, setup_sunset_middleware(faraday)
-          end
           if should_retry?
             faraday.request :retry, fetch_retry_options
           end
 
           yield faraday if block_given?
 
-          unless adapter_handles_gzip?(faraday.builder.get_adapter)
+          unless adapter_handles_gzip?(DEFAULT_ADAPTER)
             faraday.use :gzip
           end
 
-          faraday.adapter DEFAULT_ADAPTER unless faraday.builder.adapter?
+          faraday.adapter DEFAULT_ADAPTER
         end
       end
 
       def config
-        We::Call.configuration
+        Chow::Call.configuration
       end
 
       def raise_missing_app!
@@ -117,15 +100,6 @@ module We
       # https://github.com/lostisland/faraday_middleware/blob/master/lib/faraday_middleware/gzip.rb#L9
       def adapter_handles_gzip?(adapter)
         [:em_http, :net_http, :net_http_persistent].include?(adapter)
-      end
-
-      def setup_sunset_middleware(faraday)
-        options = { rollbar: :auto, active_support: :auto }
-        # Pass something that might be a logger or anything with a warn method
-        if config.detect_deprecations.respond_to?(:warn)
-          options = options.merge({ logger: config.detect_deprecations })
-        end
-        options
       end
 
       def should_retry?
