@@ -21,7 +21,7 @@ It aims to arm API developers and users with tools to make their calls more robu
 
 
 ```ruby
-gem 'we-call'
+gem 'chow-call'
 ```
 
 ```ruby
